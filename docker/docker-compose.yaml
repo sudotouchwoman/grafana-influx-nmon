@@ -1,0 +1,26 @@
+version: "3"
+
+services:
+  grafana:
+    image: grafana/grafana:9.3.0
+    ports:
+      - 3000:3000
+    volumes:
+      - grafana-storage:/var/lib/grafana
+      # https://superuser.com/questions/1477291/grafana-provisioning-dashboards-in-docker
+      - ./dashboards:/etc/grafana/provisioning/dashboards/
+      - ./datasources:/etc/grafana/provisioning/datasources/
+    environment:
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
+
+  influxdb:
+    image: influxdb:2.6.1
+    ports:
+      - 8086:8086
+    volumes:
+      - influx-storage:/var/lib/influxdb2:rw
+    command: influxd --reporting-disabled
+
+volumes:
+  grafana-storage:
+  influx-storage:
