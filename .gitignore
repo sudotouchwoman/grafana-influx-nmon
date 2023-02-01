@@ -1,3 +1,6 @@
+.vscode/
 .venv/
 *.pyc
 *.log
+*.csv
+logs/
