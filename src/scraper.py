@@ -31,12 +31,18 @@ class NmonParser(WithListeners):
         self.timestamp = None
         self.timestamp_prefix = timestamp_prefix
 
+    def add_listener(self, prefix: str, collector: LineProtocol):
+        self.log.debug(f"adding listener: {prefix}")
+        return super().add_listener(prefix, collector)
+
     def parse(self, line: str) -> Iterable[str]:
+        # self.log.info(f"given: {line}")
         prefix, _, arguments = line.partition(",")
         if prefix == self.timestamp_prefix:
             self.timestamp = self.timestamp_parser(arguments)
             return
         if prefix not in self.listeners:
+            self.log.warning(f"omit unknown prefix: {prefix}")
             return
         yield from self.listeners[prefix](arguments, self.timestamp)
 
@@ -45,10 +51,10 @@ class NmonParser(WithListeners):
         # ZZZZ,T0004,15:50:44,02-FEB-2023
         # this method recieves line without the first column
         try:
-            index, encoded_date = line.split(",", 3)
+            index, _, encoded_date = line.partition(",")
             return TimestampTuple(index, parse_nmon_date(encoded_date))
         except ValueError as e:
-            self.log.warning(f"timestamp parsing: {e}")
+            self.log.error(f"timestamp parsing ({line}): {e}")
 
 
 def parse_nmon_date(line: str) -> datetime.datetime:
@@ -69,6 +75,7 @@ class NmonHeaderParser:
     __registered: Set[str]
 
     def __init__(self, parser: WithListeners, measurement: str, run_id: str):
+        self.log = logging.getLogger("nmon-parser")
         self.parser = parser
         self.measurement = measurement
         self.run_id = run_id
@@ -80,23 +87,25 @@ class NmonHeaderParser:
 
     def parse(self, line: str):
         if self.registered_all:
+            self.log.debug("header parsing completed")
             return True
         if line.startswith("CPU") and "CPU" not in self.__registered:
             cpu_id, *_ = line.partition(",")
-            self.add_cpu_collector(cpu_id)
+            self.add_cpu_listener(cpu_id)
             if cpu_id == "CPU_ALL":
                 self.__registered.add("CPU")
             return
         if line.startswith("MEM") and "MEM" not in self.__registered:
-            self.add_mem_collector()
+            self.add_mem_listener()
             self.__registered.add("MEM")
             return
         if line.startswith("DISK") and "DISK" not in self.__registered:
             _, _, *disk_ids = line.split(",")
-            self.add_disk_collectors(disk_ids)
+            self.add_disk_listeners(disk_ids)
             self.__registered.add("DISK")
 
-    def add_cpu_collector(self, cpu_id: str):
+    def add_cpu_listener(self, cpu_id: str):
+        # self.log.debug(f"adds cpu listener {cpu_id}")
         self.parser.add_listener(
             cpu_id,
             nmon_cpu_mertic_collector(
@@ -106,14 +115,16 @@ class NmonHeaderParser:
             ),
         )
 
-    def add_mem_collector(self):
+    def add_mem_listener(self):
+        # self.log.debug("adds mem listener")
         self.parser.add_listener(
             "MEM",
             nmon_mem_metric_collector(f"mem-{self.measurement}", self.run_id),
         )
 
-    def add_disk_collectors(self, disk_ids: Iterable[str]):
+    def add_disk_listeners(self, disk_ids: Iterable[str]):
         for mode, prefix in zip("rwb", ("DISKREAD", "DISKWRITE", "DISKBUSY")):
+            # self.log.debug(f"adds {prefix} listener")
             self.parser.add_listener(
                 prefix,
                 nmon_disk_metric_collector(

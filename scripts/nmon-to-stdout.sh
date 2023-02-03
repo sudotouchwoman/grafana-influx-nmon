@@ -10,12 +10,6 @@ BASE_FIFO="/tmp/nmon-dump-${JOB_ID}"
 NMON_FIFO="${BASE_FIFO}-source"
 mkfifo $NMON_FIFO || exit
 
-# have to use ordinary file
-# for pid as writes to fifos are
-# blocking
-PID_FILE="${BASE_FIFO}-pid"
-touch $PID_FILE
-
 # run nmon in the background and
 # capture its pid, writes will be done
 # to the pipe created above
@@ -24,7 +18,7 @@ touch $PID_FILE
 # note: the FIRST line emitted by nmon into stdout
 # would be its PID which can be used to cancel
 # its worker process externally (kill -USR2 $NMON_PID)
-nmon -F $NMON_FIFO -p -s 2 -c 10 &
+nmon -F $NMON_FIFO -p -s 1 -c 5 &
 
 # run something else here
 # this script should block until the

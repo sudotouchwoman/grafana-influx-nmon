@@ -5,7 +5,7 @@ import reactivex as rx
 import reactivex.operators as ops
 
 
-def produce_outputs(args: List[str]) -> Iterable[str]:
+def stream_subprocess_stdout(args: List[str]) -> Iterable[str]:
     """
     Creates an iterator over stdout of subprocess
     called with given executable path
