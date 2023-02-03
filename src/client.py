@@ -41,5 +41,5 @@ def parse_nmon_csv(stream: Iterable[str]):
     # one might use a more elaborate
     # logic to dispatch the observables
     rx.from_iterable(stream).pipe(
-        ops.filter(lambda l: not l.startswith(("BBBP", "AAA")))
+        ops.filter(lambda l: l.startswith(("ZZZZ")))
     ).subscribe(lambda l: print(l, end=""))
