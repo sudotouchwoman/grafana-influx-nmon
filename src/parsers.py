@@ -1,6 +1,8 @@
 from typing import Iterable, Optional
 
-from . import LineProtocol, TimestampTuple, protect_from
+from . import LineProtocol, TimestampTuple, protect_from, logger_factory
+
+log = logger_factory("line-proto")
 
 
 def nmon_cpu_mertic_collector(
@@ -24,6 +26,7 @@ def nmon_cpu_mertic_collector(
         line: str, ts: Optional[TimestampTuple]
     ) -> Iterable[str]:
         if ts is None:
+            log.warning(f"cpu={cpu_id}: no ts specified")
             return
         # CPU_ALL,CPU Total username,User%,Sys%,Wait%,Idle%,Steal%,Busy,CPUs
         # CPU_ALL,T0001,2.4,1.0,0.3,96.4,0.0,,12
@@ -46,6 +49,7 @@ def nmon_mem_metric_collector(measurement: str, run_id: str) -> LineProtocol:
     @protect_from(ValueError, "mem")
     def parse_mem(line: str, ts: Optional[TimestampTuple]) -> Iterable[str]:
         if ts is None:
+            log.warning("mem: no ts specified")
             return
         # MEM,Memory MB shitbarn,memtotal,hightotal,lowtotal,swaptotal,
         # memfree,highfree,lowfree,swapfree,memshared,
@@ -104,16 +108,20 @@ def nmon_disk_metric_collector(
     @protect_from(ValueError, f"disk-{mode}")
     def parse_disk(line: str, ts: Optional[TimestampTuple]) -> Iterable[str]:
         if ts is None:
+            log.warning("disk: no ts specified")
             return
+
         index, *disk_metrics = line.split(",")
         if index != ts.code:
             return
+
+        timestamp = int(ts.datetime.timestamp())
         for name, metric in zip(disk_names, disk_metrics):
             yield (
                 f"{measurement},"
                 f'run="{run_id}",disk="{name}",mode="{mode}"'
                 f" value={metric}"
-                f" {int(ts.datetime.timestamp())}"
+                f" {timestamp}"
             )
 
     return parse_disk
