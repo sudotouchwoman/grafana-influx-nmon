@@ -1,8 +1,25 @@
+import datetime
 from typing import Iterable, Optional
+from datetime import timezone
+
+from influxdb_client.client.write.point import EPOCH
 
 from . import LineProtocol, TimestampTuple, protect_from, logger_factory
 
 log = logger_factory("line-proto")
+
+
+def to_influx_timestamp(dt: datetime.datetime) -> int:
+    """Converts python datetime.datetime object
+    to a nanosecond precision timestep consumable by influxdb
+
+    :param dt: datetime to convert
+    :type dt: datetime.datetime
+    :return: timestep as integer value
+    :rtype: int
+    """
+    time = (dt.astimezone(timezone.utc) - EPOCH).total_seconds() * 1e9
+    return int(time)
 
 
 def nmon_cpu_mertic_collector(
@@ -35,11 +52,12 @@ def nmon_cpu_mertic_collector(
             # timestep got shifted for some reason
             return
         user, sys, wait, idle, steal, *_ = map(float, metrics)
+
         yield (
             f"{measurement},"
-            f'run="{run_id}",cpus="{cpu_id}"'
+            f"run={run_id},cpus={cpu_id}"
             f" user={user},sys={sys},wait={wait},idle={idle},steal={steal}"
-            f" {int(ts.datetime.timestamp())}"
+            f" {to_influx_timestamp(ts.datetime)}"
         )
 
     return parse_cpu_all
@@ -74,17 +92,16 @@ def nmon_mem_metric_collector(measurement: str, run_id: str) -> LineProtocol:
             buffers,
             swapcached,
             inactive,
-            *_,
         ) = map(float, metrics)
         yield (
             f"{measurement},"
-            f'run="{run_id}"'
+            f"run={run_id}"
             f" memtotal={memtotal},swaptotal={swaptotal},"
             f"memfree={memfree},swapfree={swapfree},"
             f"memshared={memshared},cached={cached},"
             f"active={active},buffers={buffers},"
             f"swapcached={swapcached},inactive={inactive}"
-            f" {int(ts.datetime.timestamp())}"
+            f" {to_influx_timestamp(ts.datetime)}"
         )
 
     return parse_mem
@@ -115,11 +132,11 @@ def nmon_disk_metric_collector(
         if index != ts.code:
             return
 
-        timestamp = int(ts.datetime.timestamp())
+        timestamp = to_influx_timestamp(ts.datetime)
         for name, metric in zip(disk_names, disk_metrics):
             yield (
                 f"{measurement},"
-                f'run="{run_id}",disk="{name}",mode="{mode}"'
+                f"run={run_id},disk={name},mode={mode}"
                 f" value={metric}"
                 f" {timestamp}"
             )

@@ -26,9 +26,6 @@ def nmon_parsing_pipeline(source: Observable[str], run_id: str):
     collectors_registered.subscribe()
 
     line_proto_stream = source.pipe(
-        # ops.map(interseptor),
-        # ops.skip_until(collectors_registered),
-        # ops.map(interseptor),
         ops.observe_on(pool_scheduler),
         ops.map(parser.parse),
         ops.flat_map(lambda x: x),
