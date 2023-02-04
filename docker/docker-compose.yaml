@@ -5,6 +5,8 @@ services:
     image: grafana/grafana:9.3.0
     ports:
       - 3000:3000
+    links:
+      - influxdb:influxdb
     volumes:
       - grafana-storage:/var/lib/grafana
       # https://superuser.com/questions/1477291/grafana-provisioning-dashboards-in-docker
