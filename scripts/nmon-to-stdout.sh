@@ -18,7 +18,7 @@ mkfifo $NMON_FIFO || exit
 # note: the FIRST line emitted by nmon into stdout
 # would be its PID which can be used to cancel
 # its worker process externally (kill -USR2 $NMON_PID)
-nmon -F $NMON_FIFO -p -s 1 -c 5 &
+nmon -F $NMON_FIFO -p -s 1 -c 120 &
 
 # run something else here
 # this script should block until the
