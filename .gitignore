@@ -1,5 +1,10 @@
+# ide-specific files, virtual env
 .vscode/
 .venv/
+# logs/cache files
 *.pyc
 *.log
 logs/
+
+# sensitive dotenv files
+*.env
