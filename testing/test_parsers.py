@@ -86,7 +86,7 @@ def test_mem_metric_parser(sample_memory_metrics: str):
 
     measurement_, fields, ts = line.split(" ")
     assert measurement in measurement_
-    assert f'run="{run_id}"' in measurement_
+    assert f'run={run_id}' in measurement_
     for field in (
         "memtotal",
         "swaptotal",
@@ -136,7 +136,7 @@ def test_disk_metric_parser(sample_disk_usage: Tuple[str, str]):
         for disk, emit in zip(disk_names, parser(usage, time_info)):
             assert len(emit.split(" ")) == 3
             measurement, fields, ts = emit.split(" ")
-            assert f'mode="{mode}"' in measurement
-            assert f'disk="{disk}"' in measurement
+            assert f"mode={mode}" in measurement
+            assert f"disk={disk}" in measurement
             assert ts.isdigit()
             assert "value=" in fields
