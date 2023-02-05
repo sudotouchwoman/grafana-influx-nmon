@@ -19,6 +19,11 @@ class WithListeners:
 
 
 class NmonParser(WithListeners):
+    """Basic parser. Stores metrics parsers
+    as listeners, invokes them when corresponding prefix is found.
+    Also parses timestamps as these are stored as a separate line
+    so someone has to keep track of them
+    """
     timestamp: Optional[TimestampTuple]
     timestamp_prefix: str
 

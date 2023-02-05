@@ -21,6 +21,14 @@ def stream_subprocess_stdout(args: List[str]) -> Iterable[str]:
 
 
 def parse_outputs(stream: Iterable[str]):
+    """Example function to parse iterable stream of data
+    using reactivex (merely by counting entries)
+
+    :param stream: source data
+    :type stream: Iterable[str]
+    :return: plain nothing
+    :rtype: None
+    """
     lines = 0
 
     def count_lines(x: str) -> Tuple[int, str]:
