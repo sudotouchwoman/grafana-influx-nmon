@@ -4,8 +4,8 @@ from datetime import datetime
 import reactivex as rx
 import reactivex.operators as ops
 
-from influxdb_client import InfluxDBClient, WriteOptions
 from dotenv import load_dotenv
+from influxdb_client import InfluxDBClient, WriteOptions
 
 from src import logger_factory
 from src.client import stream_subprocess_stdout
@@ -54,7 +54,6 @@ def main():
         url=os.getenv("INFLUX_API_URL", "http://localhost:8086"),
         token=os.getenv("INFLUX_API_TOKEN", None),
         org=os.getenv("INFLUX_ORG", "my-org"),
-        debug=False,
     ) as client:
         with client.write_api(
             write_options=WriteOptions(batch_size=1)
