@@ -1,0 +1,45 @@
+name: Run linting and unit-tests
+
+on:
+  push:
+    paths-ignore:
+      - "**.md"
+      - "**.jpg"
+      - "**.png"
+      - "**.yaml"
+      - "**.yml"
+      - "**.gitignore"
+
+jobs:
+  # this workflow contains
+  # python setup, dependency installation,
+  # linting and unit-testing with pytest for ml-pipeline and flask app
+  pipeline:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: "."
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.9"
+          architecture: "x64"
+          cache: "pip"
+      - name: Install dependencies
+        working-directory: .
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install flake8 pytest
+      - name: Lint with Flake8
+        run: |
+          # stop the build if there are Python syntax errors or undefined names
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          # exit-zero treats all errors as warnings.
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=79 --statistics
+      - name: Test with pytest
+        run: |
+          python -m pytest -v
