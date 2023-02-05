@@ -5,6 +5,7 @@ import reactivex as rx
 import reactivex.operators as ops
 
 from influxdb_client import InfluxDBClient, WriteOptions
+from dotenv import load_dotenv
 
 from src import logger_factory
 from src.client import stream_subprocess_stdout
@@ -31,8 +32,10 @@ def prefix_filter(line: str) -> bool:
 
 
 def main():
-    stream = stream_subprocess_stdout(["sh", "scripts/nmon-to-stdout.sh"])
+    load_dotenv("influx.env")
     log = logger_factory("main")
+
+    stream = stream_subprocess_stdout(["sh", "scripts/nmon-to-stdout.sh"])
 
     def interceptor(x: str):
         log.debug(f"nmon: {x}")
@@ -48,16 +51,18 @@ def main():
     data = nmon_parsing_pipeline(source=stream, run_id=run_id)
 
     with InfluxDBClient(
-        url="http://localhost:8086",
-        # TODO: add dotenv support to configure the pipeline
+        url=os.getenv("INFLUX_API_URL", "http://localhost:8086"),
         token=os.getenv("INFLUX_API_TOKEN", None),
-        org="my-org",
+        org=os.getenv("INFLUX_ORG", "my-org"),
         debug=False,
     ) as client:
         with client.write_api(
             write_options=WriteOptions(batch_size=1)
         ) as write_api:
-            write_api.write(bucket="performance-metrics", record=data)
+            write_api.write(
+                bucket=os.getenv("INFLUX_BUCKET_NAME", "performance-metrics"),
+                record=data,
+            )
 
 
 if __name__ == "__main__":
