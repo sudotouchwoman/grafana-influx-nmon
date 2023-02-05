@@ -1,0 +1,10 @@
+apiVersion: 1
+
+providers:
+  - name: perf-metrics-dashboard
+    type: file
+    disableDeletion: false
+    editable: false
+    updateIntervalSeconds: 30
+    options:
+      path: /etc/grafana/provisioning/dashboards
